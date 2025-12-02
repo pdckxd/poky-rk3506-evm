@@ -22,6 +22,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
     ttf-dejavu-sans \
     ttf-dejavu-sans-mono \
     ttf-dejavu-serif \
+    ttf-wqy-zenhei \
     fontconfig \
     fontconfig-utils \
 "

@@ -1,127 +1,312 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PyQt5 Simple Display Test for RK3506 EVM
-简单的显示测试程序 - 480x800 DSI显示屏
+PyQt5 Display Test for RK3506 EVM
+RK3506 显示测试程序 - 480x800 DSI显示屏
+现代化中文界面设计
 """
 
 import sys
 import os
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QLineEdit, QCheckBox, QRadioButton,
-                             QSlider, QProgressBar, QSpinBox, QComboBox, QGroupBox)
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+                             QSlider, QProgressBar, QSpinBox, QComboBox, QGroupBox,
+                             QScrollArea, QFrame)
+from PyQt5.QtCore import Qt, QTimer, QTime
+from PyQt5.QtGui import QFont, QPalette, QColor
 
 class PyQtTestWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.click_count = 0
         self.init_ui()
+        self.setup_style()
+        
+        # 启动时钟更新
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_time)
+        self.timer.start(1000)  # 每秒更新
+        self.update_time()
+        
+    def setup_style(self):
+        """设置现代化样式表"""
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #f5f5f5;
+            }
+            
+            QLabel#titleLabel {
+                color: #2c3e50;
+                font-size: 20px;
+                font-weight: bold;
+                padding: 10px;
+            }
+            
+            QLabel#timeLabel {
+                color: #3498db;
+                font-size: 14px;
+                padding: 5px;
+            }
+            
+            QLabel#statusLabel {
+                color: #27ae60;
+                font-size: 13px;
+                padding: 8px;
+                background-color: #ecf0f1;
+                border-radius: 5px;
+                border: 1px solid #bdc3c7;
+            }
+            
+            QGroupBox {
+                font-weight: bold;
+                font-size: 13px;
+                border: 2px solid #3498db;
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 8px;
+                color: #2c3e50;
+            }
+            
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 15px;
+                font-size: 12px;
+                font-weight: bold;
+                min-height: 35px;
+            }
+            
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            
+            QPushButton:pressed {
+                background-color: #21618c;
+            }
+            
+            QLineEdit {
+                border: 2px solid #bdc3c7;
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 12px;
+                background-color: white;
+            }
+            
+            QLineEdit:focus {
+                border: 2px solid #3498db;
+            }
+            
+            QCheckBox, QRadioButton {
+                font-size: 12px;
+                spacing: 8px;
+            }
+            
+            QCheckBox::indicator, QRadioButton::indicator {
+                width: 18px;
+                height: 18px;
+            }
+            
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #ecf0f1;
+                border-radius: 4px;
+            }
+            
+            QSlider::handle:horizontal {
+                background: #3498db;
+                width: 20px;
+                margin: -6px 0;
+                border-radius: 10px;
+            }
+            
+            QProgressBar {
+                border: 2px solid #bdc3c7;
+                border-radius: 6px;
+                text-align: center;
+                font-size: 11px;
+                font-weight: bold;
+            }
+            
+            QProgressBar::chunk {
+                background-color: #2ecc71;
+                border-radius: 4px;
+            }
+            
+            QSpinBox, QComboBox {
+                border: 2px solid #bdc3c7;
+                border-radius: 6px;
+                padding: 5px;
+                font-size: 12px;
+                background-color: white;
+            }
+            
+            QSpinBox:focus, QComboBox:focus {
+                border: 2px solid #3498db;
+            }
+            
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            
+            QLabel#counterLabel {
+                color: #e74c3c;
+                font-size: 18px;
+                font-weight: bold;
+            }
+        """)
         
     def init_ui(self):
-        self.setWindowTitle("RK3506 Qt Widget Test")
+        self.setWindowTitle("RK3506 控件测试")
         
-        # 设置窗口大小匹配显示屏 (480x800)
-        self.setGeometry(0, 0, 480, 800)
+        # 窗口将以全屏模式启动，自动适配屏幕尺寸
         
-        # 创建中央控件
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+        # 创建可滚动区域
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        self.setCentralWidget(scroll)
+        
+        # 主容器
+        container = QWidget()
+        scroll.setWidget(container)
         
         # 创建主布局
         main_layout = QVBoxLayout()
-        central_widget.setLayout(main_layout)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        container.setLayout(main_layout)
+        
+        # === 顶部标题区域 ===
+        header_layout = QVBoxLayout()
+        header_layout.setSpacing(5)
         
         # 标题标签
-        title_label = QLabel("RK3506 Widget Test")
-        title_font = QFont()
-        title_font.setPointSize(16)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
+        title_label = QLabel("🚀 RK3506 显示测试")
+        title_label.setObjectName("titleLabel")
         title_label.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(title_label)
+        header_layout.addWidget(title_label)
+        
+        # 时钟标签
+        self.time_label = QLabel("")
+        self.time_label.setObjectName("timeLabel")
+        self.time_label.setAlignment(Qt.AlignCenter)
+        header_layout.addWidget(self.time_label)
+        
+        main_layout.addLayout(header_layout)
         
         # 状态标签
-        self.status_label = QLabel("Status: Ready")
+        self.status_label = QLabel("📡 状态：就绪")
+        self.status_label.setObjectName("statusLabel")
         self.status_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.status_label)
         
-        # 按钮组
-        button_group = QGroupBox("Buttons")
+        # === 按钮组 ===
+        button_group = QGroupBox("🔘 按钮测试")
         button_layout = QVBoxLayout()
+        button_layout.setSpacing(8)
         
         # 第一行按钮
         btn_row1 = QHBoxLayout()
-        self.btn1 = QPushButton("Button 1")
-        self.btn1.clicked.connect(lambda: self.on_button_click(1))
+        btn_row1.setSpacing(8)
+        self.btn1 = QPushButton("✓ 确认")
+        self.btn1.clicked.connect(lambda: self.on_button_click("确认"))
         btn_row1.addWidget(self.btn1)
         
-        self.btn2 = QPushButton("Button 2")
-        self.btn2.clicked.connect(lambda: self.on_button_click(2))
+        self.btn2 = QPushButton("✗ 取消")
+        self.btn2.clicked.connect(lambda: self.on_button_click("取消"))
         btn_row1.addWidget(self.btn2)
         
-        self.btn3 = QPushButton("Button 3")
-        self.btn3.clicked.connect(lambda: self.on_button_click(3))
+        self.btn3 = QPushButton("⟳ 刷新")
+        self.btn3.clicked.connect(lambda: self.on_button_click("刷新"))
         btn_row1.addWidget(self.btn3)
         button_layout.addLayout(btn_row1)
         
         # 第二行按钮
         btn_row2 = QHBoxLayout()
-        self.btn4 = QPushButton("Button 4")
-        self.btn4.clicked.connect(lambda: self.on_button_click(4))
+        btn_row2.setSpacing(8)
+        self.btn4 = QPushButton("◀ 上一步")
+        self.btn4.clicked.connect(lambda: self.on_button_click("上一步"))
         btn_row2.addWidget(self.btn4)
         
-        self.btn5 = QPushButton("Button 5")
-        self.btn5.clicked.connect(lambda: self.on_button_click(5))
+        self.btn5 = QPushButton("▶ 下一步")
+        self.btn5.clicked.connect(lambda: self.on_button_click("下一步"))
         btn_row2.addWidget(self.btn5)
         
-        self.btn6 = QPushButton("Button 6")
-        self.btn6.clicked.connect(lambda: self.on_button_click(6))
+        self.btn6 = QPushButton("⚙ 设置")
+        self.btn6.clicked.connect(lambda: self.on_button_click("设置"))
         btn_row2.addWidget(self.btn6)
         button_layout.addLayout(btn_row2)
         
         button_group.setLayout(button_layout)
         main_layout.addWidget(button_group)
         
-        # 文本输入框
-        input_group = QGroupBox("Text Input")
+        # === 文本输入框 ===
+        input_group = QGroupBox("✏️ 文本输入")
         input_layout = QVBoxLayout()
+        input_layout.setSpacing(5)
         
         self.line_edit = QLineEdit()
-        self.line_edit.setPlaceholderText("Enter text here...")
+        self.line_edit.setPlaceholderText("请在这里输入文字...")
         self.line_edit.textChanged.connect(self.on_text_changed)
         input_layout.addWidget(self.line_edit)
         
         input_group.setLayout(input_layout)
         main_layout.addWidget(input_group)
         
-        # 复选框和单选按钮
-        check_radio_group = QGroupBox("CheckBox & RadioButton")
+        # === 复选框和单选按钮 ===
+        check_radio_group = QGroupBox("☑️ 选择控件")
         check_radio_layout = QVBoxLayout()
+        check_radio_layout.setSpacing(10)
         
-        self.checkbox1 = QCheckBox("Option 1")
+        self.checkbox1 = QCheckBox("启用功能 A")
         self.checkbox1.stateChanged.connect(self.on_checkbox_changed)
         check_radio_layout.addWidget(self.checkbox1)
         
-        self.checkbox2 = QCheckBox("Option 2")
+        self.checkbox2 = QCheckBox("启用功能 B")
         self.checkbox2.stateChanged.connect(self.on_checkbox_changed)
         check_radio_layout.addWidget(self.checkbox2)
         
-        self.radio1 = QRadioButton("Radio A")
+        # 添加分隔线
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        check_radio_layout.addWidget(line)
+        
+        self.radio1 = QRadioButton("🔴 红色主题")
         self.radio1.toggled.connect(self.on_radio_changed)
         check_radio_layout.addWidget(self.radio1)
         
-        self.radio2 = QRadioButton("Radio B")
+        self.radio2 = QRadioButton("🔵 蓝色主题")
         self.radio2.toggled.connect(self.on_radio_changed)
+        self.radio2.setChecked(True)  # 默认选中
         check_radio_layout.addWidget(self.radio2)
         
         check_radio_group.setLayout(check_radio_layout)
         main_layout.addWidget(check_radio_group)
         
-        # 滑动条和进度条
-        slider_group = QGroupBox("Slider & Progress")
+        # === 滑动条和进度条 ===
+        slider_group = QGroupBox("🎚️ 滑块与进度")
         slider_layout = QVBoxLayout()
+        slider_layout.setSpacing(12)
+        
+        # 滑块标签
+        slider_label_layout = QHBoxLayout()
+        slider_label_layout.addWidget(QLabel("音量调节："))
+        self.slider_value_label = QLabel("50")
+        self.slider_value_label.setStyleSheet("color: #3498db; font-weight: bold;")
+        slider_label_layout.addWidget(self.slider_value_label)
+        slider_label_layout.addStretch()
+        slider_layout.addLayout(slider_label_layout)
         
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
@@ -130,6 +315,8 @@ class PyQtTestWindow(QMainWindow):
         self.slider.valueChanged.connect(self.on_slider_changed)
         slider_layout.addWidget(self.slider)
         
+        # 进度条标签
+        slider_layout.addWidget(QLabel("下载进度："))
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(50)
         slider_layout.addWidget(self.progress_bar)
@@ -137,100 +324,159 @@ class PyQtTestWindow(QMainWindow):
         slider_group.setLayout(slider_layout)
         main_layout.addWidget(slider_group)
         
-        # 数字调节框和下拉框
-        other_group = QGroupBox("SpinBox & ComboBox")
-        other_layout = QHBoxLayout()
+        # === 数字调节框和下拉框 ===
+        other_group = QGroupBox("🔢 数值与选择")
+        other_layout = QVBoxLayout()
+        other_layout.setSpacing(10)
         
+        # 数字框
+        spinbox_layout = QHBoxLayout()
+        spinbox_layout.addWidget(QLabel("数量："))
         self.spinbox = QSpinBox()
         self.spinbox.setMinimum(0)
         self.spinbox.setMaximum(100)
         self.spinbox.setValue(10)
         self.spinbox.valueChanged.connect(self.on_spinbox_changed)
-        other_layout.addWidget(QLabel("Value:"))
-        other_layout.addWidget(self.spinbox)
+        spinbox_layout.addWidget(self.spinbox)
+        spinbox_layout.addStretch()
+        other_layout.addLayout(spinbox_layout)
         
+        # 下拉框
+        combo_layout = QHBoxLayout()
+        combo_layout.addWidget(QLabel("城市："))
         self.combobox = QComboBox()
-        self.combobox.addItems(["Item 1", "Item 2", "Item 3", "Item 4"])
+        self.combobox.addItems(["北京", "上海", "广州", "深圳", "杭州"])
         self.combobox.currentTextChanged.connect(self.on_combo_changed)
-        other_layout.addWidget(QLabel("Select:"))
-        other_layout.addWidget(self.combobox)
+        combo_layout.addWidget(self.combobox)
+        combo_layout.addStretch()
+        other_layout.addLayout(combo_layout)
         
         other_group.setLayout(other_layout)
         main_layout.addWidget(other_group)
         
-        # 底部计数器
+        # === 底部计数器 ===
+        counter_group = QGroupBox("📊 统计信息")
         counter_layout = QHBoxLayout()
-        counter_layout.addWidget(QLabel("Click Counter:"))
+        counter_layout.addWidget(QLabel("点击次数："))
         self.counter_label = QLabel("0")
+        self.counter_label.setObjectName("counterLabel")
         counter_layout.addWidget(self.counter_label)
         counter_layout.addStretch()
-        main_layout.addLayout(counter_layout)
+        counter_group.setLayout(counter_layout)
+        main_layout.addWidget(counter_group)
         
         # 添加弹性空间
         main_layout.addStretch()
     
-    def on_button_click(self, button_num):
+    def update_time(self):
+        """更新时钟显示"""
+        current_time = QTime.currentTime()
+        time_text = current_time.toString("HH:mm:ss")
+        self.time_label.setText(f"⏰ {time_text}")
+    
+    def on_button_click(self, button_name):
+        """按钮点击事件"""
         self.click_count += 1
         self.counter_label.setText(str(self.click_count))
-        self.status_label.setText(f"Status: Button {button_num} clicked")
+        self.status_label.setText(f"✓ 已点击：{button_name}")
     
     def on_text_changed(self, text):
-        self.status_label.setText(f"Status: Text = '{text}'")
+        """文本改变事件"""
+        if text:
+            self.status_label.setText(f"✏️ 输入：{text}")
+        else:
+            self.status_label.setText("📡 状态：就绪")
     
     def on_checkbox_changed(self, state):
+        """复选框改变事件"""
         sender = self.sender()
-        status = "checked" if state == Qt.Checked else "unchecked"
-        self.status_label.setText(f"Status: {sender.text()} {status}")
+        status = "已启用" if state == Qt.Checked else "已禁用"
+        self.status_label.setText(f"☑️ {sender.text()} {status}")
     
     def on_radio_changed(self, checked):
+        """单选按钮改变事件"""
         if checked:
             sender = self.sender()
-            self.status_label.setText(f"Status: {sender.text()} selected")
+            self.status_label.setText(f"🎨 已切换至：{sender.text()}")
     
     def on_slider_changed(self, value):
+        """滑块改变事件"""
+        self.slider_value_label.setText(str(value))
         self.progress_bar.setValue(value)
-        self.status_label.setText(f"Status: Slider = {value}")
+        self.status_label.setText(f"🎚️ 音量：{value}%")
     
     def on_spinbox_changed(self, value):
-        self.status_label.setText(f"Status: SpinBox = {value}")
+        """数字框改变事件"""
+        self.status_label.setText(f"🔢 数量：{value}")
     
     def on_combo_changed(self, text):
-        self.status_label.setText(f"Status: Selected '{text}'")
+        """下拉框改变事件"""
+        self.status_label.setText(f"📍 已选择城市：{text}")
     
     def keyPressEvent(self, event):
         """处理键盘事件"""
         if event.key() == Qt.Key_Escape:
-            self.close()
+            self.status_label.setText("👋 再见！正在退出...")
+            QTimer.singleShot(500, self.close)  # 延迟关闭以显示消息
         super().keyPressEvent(event)
 
 def main():
+    """主函数 - 初始化并启动应用"""
+    print("=" * 60)
+    print("🚀 RK3506 PyQt5 显示测试程序")
+    print("=" * 60)
+    
     # 设置QPA平台为嵌入式设备
     # 优先使用eglfs (GPU加速)，备选linuxfb
     if 'QT_QPA_PLATFORM' not in os.environ:
         # 检查eglfs是否可用
         if os.path.exists('/usr/lib/plugins/platforms/libqeglfs.so'):
             os.environ['QT_QPA_PLATFORM'] = 'eglfs'
-            print("Using QPA platform: eglfs")
+            print("✓ 使用平台：eglfs (GPU加速)")
         elif os.path.exists('/usr/lib/plugins/platforms/libqlinuxfb.so'):
             os.environ['QT_QPA_PLATFORM'] = 'linuxfb'
-            print("Using QPA platform: linuxfb")
+            print("✓ 使用平台：linuxfb (Linux FrameBuffer)")
         else:
             # 降级到offscreen用于测试
             os.environ['QT_QPA_PLATFORM'] = 'offscreen'
-            print("Using QPA platform: offscreen (no display)")
+            print("⚠ 使用平台：offscreen (无显示)")
+    
+    # 配置运行时环境
+    # 注意：系统已在 rockchip-image.bbclass 中配置了 /usr/lib/fonts -> /usr/share/fonts
+    # 以下配置作为额外保障，确保在各种情况下都能正常工作
+    
+    # 设置 XDG_RUNTIME_DIR 避免警告
+    if 'XDG_RUNTIME_DIR' not in os.environ:
+        os.environ['XDG_RUNTIME_DIR'] = '/tmp'
+    
+    # （可选）显式设置字体目录，作为后备方案
+    if 'QT_QPA_FONTDIR' not in os.environ:
+        # 系统字体目录已通过符号链接配置，这里作为额外保障
+        if os.path.exists('/usr/lib/fonts'):
+            os.environ['QT_QPA_FONTDIR'] = '/usr/lib/fonts'
+            print("✓ 字体目录：/usr/lib/fonts")
+        elif os.path.exists('/usr/share/fonts'):
+            os.environ['QT_QPA_FONTDIR'] = '/usr/share/fonts'
+            print("✓ 字体目录：/usr/share/fonts")
+    
+    print("\n正在启动应用程序...")
+    print("💡 提示：")
+    print("   • 程序将以全屏模式运行")
+    print("   • 按 ESC 键退出程序\n")
     
     app = QApplication(sys.argv)
     
-    # 使用传统的Windows样式（可选：'Windows', 'Fusion', 'Plastique'等）
-    # 注释掉可使用默认样式
-    # app.setStyle('Windows')
+    # 使用 Fusion 样式作为基础（现代化外观）
+    app.setStyle('Fusion')
     
     # 创建并显示窗口
     window = PyQtTestWindow()
-    window.show()
     
-    # 如果需要全屏，取消注释下面这行
-    # window.showFullScreen()
+    # 直接全屏启动（适合小屏幕嵌入式设备）
+    window.showFullScreen()
+    
+    print("✓ 应用程序已启动")
+    print("=" * 60)
     
     sys.exit(app.exec_())
 
