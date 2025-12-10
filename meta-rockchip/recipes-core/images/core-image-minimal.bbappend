@@ -25,6 +25,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
     ttf-wqy-zenhei \
     fontconfig \
     fontconfig-utils \
+    i2c-tools \
 "
 
 # Add SSH server feature (dropbear) and enable root login with empty password
